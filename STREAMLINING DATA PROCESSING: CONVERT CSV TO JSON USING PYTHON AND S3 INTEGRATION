@@ -1,0 +1,60 @@
+Task: Develop a Python script to retrieve a CSV file from an S3 bucket, transform it into JSON format, and store the converted data back into the same bucket.
+
+Before you begin, make sure you meet the following requirements:
+    Your machine should have Python installed, preferably version 3.7 or above.
+    You should have an active AWS account with S3 access.
+    Install the `boto3` library using the pip package manager by running the following command:
+                pip install boto3
+
+To begin the process, start by creating an S3 bucket in your AWS account. Once the bucket is created, you can upload the CSV file into it. 
+Additionally, create an empty JSON file within the same bucket. This JSON file will serve as the output file where the converted data will be written into.
+
+import boto3
+import csv
+import json
+
+def convert_csv_to_json(csv_data):
+    data = []
+    csv_reader = csv.DictReader(csv_data.splitlines())
+    for row in csv_reader:
+        data.append(row)
+
+    return json.dumps(data)
+
+# Specify your AWS credentials and region
+aws_access_key_id = 'YOUR_ACCESS_KEY_ID'  # Replace with your access key id.
+aws_secret_access_key = 'YOUR_SECRET_ACCESS_KEY'  # Replace with your secret access key.
+aws_region = 'YOUR_REGION'  # Replace with your desired region.
+
+# Specify the S3 bucket details
+bucket_name = 'YOUR_BUCKET_NAME'
+csv_file_key = 'path/to/your/csv/file.csv'
+json_file_key = 'path/to/your/json/file.json'
+
+# Create a session using the credentials and region
+session = boto3.Session(
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key,
+    region_name=aws_region
+)
+
+# Create an S3 client
+s3_client = session.client('s3')
+
+try:
+    # Retrieve the CSV file object from S3
+    response = s3_client.get_object(Bucket=bucket_name, Key=csv_file_key)
+
+    # Read the contents of the object
+    csv_data = response['Body'].read().decode('utf-8')
+
+    # Convert CSV to JSON
+    json_data = convert_csv_to_json(csv_data)
+
+    # Write the JSON data to S3
+    s3_client.put_object(Body=json_data, Bucket=bucket_name, Key=json_file_key)
+
+    print("Conversion successful. JSON data written to S3.")
+
+except Exception as e:
+    print(f'Error reading or writing data from/to S3: {e}')
